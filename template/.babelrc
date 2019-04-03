@@ -1,0 +1,26 @@
+{
+  "presets": [
+    ["env", {
+      "modules": false
+    }],
+    "stage-2"
+  ],
+  "plugins": [
+    "lodash",
+    [
+      "transform-runtime",
+      {
+        "polyfill": false,
+        "regenerator": false,
+        "helpers": false
+      }
+    ]
+  ],
+  "env": {
+    "test": {
+      "presets": ["env", "stage-2"]{{#if_eq runner "karma"}},
+      "plugins": ["istanbul"]
+      {{/if_eq}}
+    }
+  }
+}
