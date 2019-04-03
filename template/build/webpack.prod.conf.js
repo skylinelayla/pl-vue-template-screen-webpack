@@ -13,10 +13,9 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
-const env = process.env.BUILD_ENV === 'qa'
-    ? require('../config/qa.env')
-    : require('../config/prod.env');
+const env = require('../config/prod.env');
 
 const webpackConfig = merge(baseWebpackConfig, {
     module: {
@@ -33,22 +32,15 @@ const webpackConfig = merge(baseWebpackConfig, {
         chunkFilename: utils.assetsPath('[name].[chunkhash].js')
     },
     plugins: [
-        new webpack.ProvidePlugin({
-            Zepto: 'zepto',
-            $: 'zepto',
-            '$.Callbacks': ['zepto/src/callbacks', 'Callbacks'],
-            '$.Deferred': ['zepto/src/deferred', 'Deferred'],
-            '$.os': ['zepto/src/detect', 'os'],
-            '$.browser': ['zepto/src/detect', 'browser']
-        }),
         // http://vuejs.github.io/vue-loader/en/workflow/production.html
         new webpack.DefinePlugin({
             'process.env': env
         }),
-        // UglifyJs do not support ES6+, you can also use babel-minify for better treeshaking: https://github.com/babel/minify
-        new webpack.optimize.UglifyJsPlugin({
-            compress: {
-                warnings: false
+        new UglifyJsPlugin({
+            uglifyOptions: {
+                compress: {
+                    warnings: false
+                }
             },
             sourceMap: config.build.productionSourceMap,
             parallel: true
@@ -56,9 +48,10 @@ const webpackConfig = merge(baseWebpackConfig, {
         // extract css into its own file
         new ExtractTextPlugin({
             filename: utils.assetsPath('[name].[contenthash].css'),
-            // set the following option to `true` if you want to extract CSS from
-            // codesplit chunks into this main css file as well.
-            // This will result in *all* of your app's CSS being loaded upfront.
+            // Setting the following option to `false` will not extract CSS from codesplit chunks.
+            // Their CSS will instead be inserted dynamically with style-loader when the codesplit chunk has been loaded by webpack.
+            // It's currently set to `true` because we are seeing that sourcemaps are included in the codesplit bundle as well when it's `false`,
+            // increasing file size: https://github.com/vuejs-templates/webpack/issues/1110
             allChunks: true
         }),
         // Compress extracted CSS. We are using this plugin so that possible
@@ -70,7 +63,8 @@ const webpackConfig = merge(baseWebpackConfig, {
                     map: {
                         inline: false
                     }
-                } : {
+                }
+                : {
                     safe: true
                 }
         }),
@@ -91,14 +85,14 @@ const webpackConfig = merge(baseWebpackConfig, {
             // necessary to consistently work with multiple chunks via CommonsChunkPlugin
             chunksSortMode: 'dependency'
         }),
-        // keep module.id stable when vender modules does not change
+        // keep module.id stable when vendor modules does not change
         new webpack.HashedModuleIdsPlugin(),
         // enable scope hoisting
         new webpack.optimize.ModuleConcatenationPlugin(),
         // split vendor js into its own file
         new webpack.optimize.CommonsChunkPlugin({
             name: 'vendor',
-            minChunks: function (module) {
+            minChunks(module) {
                 // any required modules inside node_modules are extracted to vendor
                 return (
                     module.resource
@@ -129,7 +123,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         new CopyWebpackPlugin([
             {
                 from: path.resolve(__dirname, '../static'),
-                to: path.join(config.build.assetsSubDirectory, 'static'),
+                to: config.build.assetsSubDirectory,
                 ignore: ['.*']
             }
         ])

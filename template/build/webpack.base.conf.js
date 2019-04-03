@@ -12,6 +12,17 @@ function resolve(dir) {
     return path.join(__dirname, '..', dir);
 }
 
+const createLintingRule = () => ({
+    test: /\.(js|vue)$/,
+    loader: 'eslint-loader',
+    enforce: 'pre',
+    include: [resolve('src'), resolve('test')],
+    options: {
+        formatter: require('eslint-friendly-formatter'),
+        emitWarning: !config.dev.showEslintErrorsInOverlay
+    }
+});
+
 module.exports = {
     context: path.resolve(__dirname, '../'),
     entry: {
@@ -27,29 +38,15 @@ module.exports = {
     resolve: {
         extensions: ['.js', '.vue', '.json'],
         alias: {
-            {{#if_eq build "standalone"}}
             'vue$': 'vue/dist/vue.esm.js',
             '@': resolve('src'),
-            '@zhishu': resolve('node_modules/@baidu/lego-events-zhishu/src/components'),
-            '*': resolve('node_modules/@baidu/lego-events-base')
-            {{/if_eq}}
-           
+            '@': resolve('node_modules/@baidu/lego-events-zhishu/src/components'),
+            '*': resolve('node_modules/@baidu/lego-events-base/src/')
         }
     },
     module: {
         rules: [
-            {{#lint}}
-            ...(config.dev.useEslint ? [{
-                test: /\.(js|vue)$/,
-                loader: 'eslint-loader',
-                enforce: 'pre',
-                include: [resolve('src'), resolve('test')],
-                options: {
-                    formatter: require('eslint-friendly-formatter'),
-                    emitWarning: !config.dev.showEslintErrorsInOverlay
-                }
-            }] : []),
-            {{/lint}}
+            ...(config.dev.useEslint ? [createLintingRule()] : []),
             {
                 test: /\.vue$/,
                 loader: 'vue-loader',
@@ -61,33 +58,21 @@ module.exports = {
                 include: [
                     resolve('src'),
                     resolve('test'),
+                    resolve('node_modules/webpack-dev-server/client'),
+                    resolve('node_modules/@baidu/lego-events-common'),
                     resolve('node_modules/@baidu/lego-events-base'),
-                    resolve('node_modules/@baidu/lego-events-zhishu'),
+                    resolve('node_modules/@baidu/lego-events-index'),
                     resolve('node_modules/@baidu/lego-events-box'),
-                    resolve('node_modules/vue-echarts'),
+                    resolve('node_modules/@baidu/lego-events-map'),
+                    resolve('node_modules/@baidu/lego-events-zhishu'),
                     resolve('node_modules/resize-detector')
-                ]
-            },
-            {
-                test: /node_modules\/zepto/,
-                oneOf: [
-                    {
-                        test: /deferred/,
-                        /* eslint-disable */
-                        loader: 'imports-loader?this=>window,define=>false,$.Callbacks=zepto/src/callbacks!exports-loader?window.Zepto'
-                        /* eslint-enable */
-                    },
-                    {
-                        test: /.*/,
-                        loader: 'imports-loader?this=>window,define=>false!exports-loader?window.Zepto'
-                    }
                 ]
             },
             {
                 test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
                 loader: 'url-loader',
                 options: {
-                    limit: 2000,
+                    limit: 10000,
                     name: utils.assetsPath('img/[name].[hash:7].[ext]')
                 }
             },
@@ -95,7 +80,7 @@ module.exports = {
                 test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,
                 loader: 'url-loader',
                 options: {
-                    limit: 1,
+                    limit: 10000,
                     name: utils.assetsPath('media/[name].[hash:7].[ext]')
                 }
             },
@@ -108,5 +93,17 @@ module.exports = {
                 }
             }
         ]
+    },
+    node: {
+        // prevent webpack from injecting useless setImmediate polyfill because Vue
+        // source contains it (although only uses it if it's native).
+        setImmediate: false,
+        // prevent webpack from injecting mocks to Node native modules
+        // that does not make sense for the client
+        dgram: 'empty',
+        fs: 'empty',
+        net: 'empty',
+        tls: 'empty',
+        child_process: 'empty'
     }
 };

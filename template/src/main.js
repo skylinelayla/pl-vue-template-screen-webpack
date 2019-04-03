@@ -16,12 +16,6 @@ import router from './router';
 
 Vue.config.productionTip = false;
 
-const standardRatio = 16 / 9;
-const standardScreen = {
-    width: 1920,
-    height: 1080
-};
-
 /* eslint-disable no-new */
 new Vue({
     el: '#app',
@@ -42,29 +36,5 @@ new Vue({
             get: () => this.innerWidth
         });
         return {windowWidth};
-    },
-    mounted() {
-        window.addEventListener('resize', this.autoResize);
-        this.autoResize();
-        sendLog({
-            type: 'pv',
-            text: '车展大屏'
-        });
-    },
-    methods: {
-        autoResize() {
-            let screenRatio = window.innerWidth / window.innerHeight;
-            let app = document.getElementById('app');
-            let scale = screenRatio >= standardRatio
-                ? 'scale(' + (document.body.clientHeight / standardScreen.height).toFixed(2) + ')'
-                : 'scale(' + (document.body.clientWidth / standardScreen.width).toFixed(2) + ')';
-
-            app.style.transform
-                = app.style.webkitTransform
-                = app.style.MozTransform
-                = app.style.msTransform
-                = app.style.OTransform
-                = scale;
-        }
     }
 });

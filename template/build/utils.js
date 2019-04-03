@@ -6,16 +6,15 @@
 const path = require('path');
 const config = require('../config');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const pkg = require('../package.json');
+const packageConfig = require('../package.json');
 
-/* eslint-disable */
 exports.assetsPath = function (_path) {
     const assetsSubDirectory = process.env.NODE_ENV === 'production'
         ? config.build.assetsSubDirectory
         : config.dev.assetsSubDirectory;
+
     return path.posix.join(assetsSubDirectory, _path);
 };
-/* eslint-enable */
 
 exports.cssLoaders = function (options) {
     options = options || {};
@@ -23,7 +22,6 @@ exports.cssLoaders = function (options) {
     const cssLoader = {
         loader: 'css-loader',
         options: {
-            minimize: process.env.NODE_ENV === 'production',
             sourceMap: options.sourceMap
         }
     };
@@ -38,6 +36,7 @@ exports.cssLoaders = function (options) {
     // generate loader string to be used with extract text plugin
     function generateLoaders(loader, loaderOptions) {
         const loaders = options.usePostCSS ? [cssLoader, postcssLoader] : [cssLoader];
+
         if (loader) {
             loaders.push({
                 loader: loader + '-loader',
@@ -68,9 +67,11 @@ exports.cssLoaders = function (options) {
             loader: 'sass-resources-loader',
             options: {
                 resources: [
-                    path.resolve(__dirname, '../node_modules/@baidu/lego-events-zhishu/src/assets/css/variables.less'),
-                    path.resolve(__dirname, '../node_modules/@baidu/lego-events-zhishu/src/assets/css/themeDark.less')
-                ]  
+                    path.resolve(__dirname,
+                        '../node_modules/@baidu/lego-events-zhishu/src/assets/css/variables.less'),
+                    path.resolve(__dirname,
+                        '../node_modules/@baidu/lego-events-zhishu/src/assets/css/themeScreenBlue.less')
+                ]
             }
         }),
         sass: generateLoaders('sass', {
@@ -86,6 +87,7 @@ exports.cssLoaders = function (options) {
 exports.styleLoaders = function (options) {
     const output = [];
     const loaders = exports.cssLoaders(options);
+
     for (const extension in loaders) {
         const loader = loaders[extension];
         output.push({
@@ -93,10 +95,11 @@ exports.styleLoaders = function (options) {
             use: loader
         });
     }
+
     return output;
 };
 
-exports.createNotifierCallback = function () {
+exports.createNotifierCallback = () => {
     const notifier = require('node-notifier');
 
     return (severity, errors) => {
@@ -105,9 +108,10 @@ exports.createNotifierCallback = function () {
         }
 
         const error = errors[0];
-        const filename = error.file.split('!').pop();
+        const filename = error.file && error.file.split('!').pop();
+
         notifier.notify({
-            title: pkg.name,
+            title: packageConfig.name,
             message: severity + ': ' + error.name,
             subtitle: filename || '',
             icon: path.join(__dirname, 'logo.png')
